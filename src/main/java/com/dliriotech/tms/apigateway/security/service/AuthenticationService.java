@@ -13,15 +13,15 @@ public class AuthenticationService {
     private final WebClient webClient;
     private final String apiGatewayKey;
 
-    public AuthenticationService(WebClient.Builder webClientBuilder,
+    public AuthenticationService(WebClient authServiceWebClient,
                                  @Value("${service.api-gateway-key}") String apiGatewayKey) {
-        this.webClient = webClientBuilder.build();
+        this.webClient = authServiceWebClient;
         this.apiGatewayKey = apiGatewayKey;
     }
 
     public Mono<Boolean> validateToken(String token, UriRequest request) {
         return webClient.get()
-                .uri("http://auth-service/api/auth/validate")
+                .uri("/api/auth/validate")
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                 .header("X-Service-API-Key", apiGatewayKey)
                 .retrieve()

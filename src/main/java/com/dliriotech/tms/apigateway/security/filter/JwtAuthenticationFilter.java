@@ -64,6 +64,6 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
     @Override
     public int getOrder() {
-        return -1; // Alta prioridad para ejecutarse antes de otros filtros
+        return -1;
     }
 }
