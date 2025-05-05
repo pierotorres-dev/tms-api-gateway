@@ -1,6 +1,8 @@
 package com.dliriotech.tms.apigateway.security.filter;
 
+import com.dliriotech.tms.apigateway.config.PublicRoutesConfig;
 import com.dliriotech.tms.apigateway.dto.UriRequest;
+import com.dliriotech.tms.apigateway.error.ErrorHandler;
 import com.dliriotech.tms.apigateway.security.service.AuthenticationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,52 +16,81 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.util.UUID;
+
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
     private final AuthenticationService authenticationService;
+    private final PublicRoutesConfig publicRoutesConfig;
+    private final ErrorHandler errorHandler;
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        ServerHttpRequest request = exchange.getRequest();
+        try {
+            ServerHttpRequest request = exchange.getRequest();
+            String path = request.getPath().toString();
+            String method = request.getMethod().toString();
 
-        // Verificar si hay header de Authorization
-        if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
-            return onError(exchange, HttpStatus.UNAUTHORIZED, "Token de autorización no proporcionado");
+            if (publicRoutesConfig.isPublic(path)) {
+                log.info("Accediendo a ruta pública: {}", path);
+                return chain.filter(exchange);
+            }
+
+            if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
+                return errorHandler.handleAuthError(exchange,
+                        HttpStatus.UNAUTHORIZED,
+                        "Se requiere token de autorización para acceder a " + path);
+            }
+
+            String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return errorHandler.handleAuthError(exchange,
+                        HttpStatus.UNAUTHORIZED,
+                        "Formato de token inválido. Se espera 'Bearer {token}'");
+            }
+
+            String token = authHeader.substring(7);
+            log.info("Validando acceso para: {} {}", method, path);
+
+            return authenticationService.validateToken(token, new UriRequest(path, method))
+                    .flatMap(valid -> {
+                        if (Boolean.TRUE.equals(valid)) {
+                            log.info("Token validado exitosamente para: {} {}", method, path);
+                            return chain.filter(exchange);
+                        } else {
+                            String serviceName = extractServiceName(path);
+                            return errorHandler.handleAuthError(exchange,
+                                    HttpStatus.FORBIDDEN,
+                                    "El token no tiene autorización para acceder al servicio: " + serviceName);
+                        }
+                    })
+                    .onErrorResume(error -> {
+                        log.error("Error validando token: {}", error.getMessage(), error);
+                        return errorHandler.handleAuthError(exchange,
+                                HttpStatus.INTERNAL_SERVER_ERROR,
+                                "Error en el servicio de autenticación: " + error.getMessage());
+                    });
+        } catch (Exception ex) {
+            log.error("Error inesperado en el filtro de autenticación", ex);
+            return errorHandler.handleAuthError(exchange,
+                    HttpStatus.BAD_REQUEST,
+                    "Error en la solicitud: " + ex.getMessage());
         }
-
-        String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return onError(exchange, HttpStatus.UNAUTHORIZED, "Formato de token inválido");
-        }
-
-        String token = authHeader.substring(7);
-        String path = request.getPath().toString();
-        String method = request.getMethod().toString();
-
-        log.info("Validando acceso para: {} {}", method, path);
-
-        return authenticationService.validateToken(token, new UriRequest(path, method))
-                .flatMap(valid -> {
-                    if (Boolean.TRUE.equals(valid)) {
-                        log.info("Token validado exitosamente");
-                        return chain.filter(exchange);
-                    } else {
-                        log.warn("Token inválido o sin permisos");
-                        return onError(exchange, HttpStatus.FORBIDDEN, "Sin autorización para acceder a este recurso");
-                    }
-                })
-                .onErrorResume(error -> {
-                    log.error("Error validando token: {}", error.getMessage());
-                    return onError(exchange, HttpStatus.INTERNAL_SERVER_ERROR, "Error en la validación");
-                });
     }
 
-    private Mono<Void> onError(ServerWebExchange exchange, HttpStatus status, String message) {
-        exchange.getResponse().setStatusCode(status);
-        return exchange.getResponse().setComplete();
+    private String extractServiceName(String path) {
+        try {
+            String[] segments = path.split("/");
+            if (segments.length > 2) {
+                return segments[2];
+            }
+        } catch (Exception e) {
+            log.warn("No se pudo extraer el nombre del servicio del path: {}", path);
+        }
+        return "desconocido";
     }
 
     @Override
