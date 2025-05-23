@@ -12,6 +12,9 @@ public class GatewayRoutingConfig {
     @Value("${service.auth-service-url}")
     private String authServiceUrl;
 
+    @Value("${service.fleet-service-url}")
+    private String fleetServiceUrl;
+
     @Bean
     public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
         return builder.routes()
@@ -21,6 +24,12 @@ public class GatewayRoutingConfig {
                         .uri(authServiceUrl))
                 .route("auth-service", r -> r.path("/api/users/**")
                         .uri(authServiceUrl))
+                .route("fleet-service", r -> r.path("/api/v1/equipos/**")
+                        .uri(fleetServiceUrl))
+                .route("fleet-service", r -> r.path("/api/v1/observaciones-equipo/**")
+                        .uri(fleetServiceUrl))
+                .route("fleet-service", r -> r.path("/api/v1/catalogos/**")
+                        .uri(fleetServiceUrl))
                 .build();
     }
 }
