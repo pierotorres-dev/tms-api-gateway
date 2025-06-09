@@ -16,7 +16,7 @@ public class CorsConfig {
         CorsConfiguration corsConfig = new CorsConfiguration();
         corsConfig.setAllowCredentials(true);
         corsConfig.addAllowedOrigin("http://localhost:4200");
-        corsConfig.addAllowedOrigin("https://tu-app-prod.com");
+        corsConfig.addAllowedOrigin("https://dliriotech.com");
         corsConfig.addAllowedMethod("*");
         corsConfig.addAllowedHeader("*");
         corsConfig.setMaxAge(3600L);

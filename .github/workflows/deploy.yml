@@ -1,0 +1,86 @@
+# Este workflow se activa en cada push a la rama 'master'
+name: Build and Deploy to Kubernetes
+
+on:
+  push:
+    branches: [ master ] # Puedes cambiarlo a 'main' si usas esa rama
+
+# Variables de entorno para que el workflow sea fácil de adaptar
+env:
+  # Cambia estos valores para cada microservicio
+  IMAGE_NAME: pierodevjar/tms-api-gateway
+  DEPLOYMENT_NAME: api-gateway
+  KUBE_NAMESPACE: tms-backend
+
+jobs:
+  build-and-push:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest # Usamos un corredor de Linux estándar
+
+    steps:
+      # 1. Clona el código de tu repositorio
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Inicia sesión en Docker Hub usando los secretos que configuraste
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # 3. Extrae metadatos de la imagen, como la etiqueta
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=,format=short
+
+      # 4. Construye la imagen Docker y la sube a Docker Hub
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: . # Usa el Dockerfile en la raíz del proyecto
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  deploy:
+    name: Deploy to Kubernetes Cluster
+    # Este job solo se ejecuta si 'build-and-push' fue exitoso
+    needs: build-and-push
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Instala el CLI de kubectl
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+
+      # 2. Instala el plugin 'oidc-login' que tu kubeconfig necesita
+      # Esto es CRUCIAL para que la autenticación con token de corta duración funcione
+      - name: Install oidc-login plugin
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl
+          curl -sSL "https://github.com/int128/kubelogin/releases/download/v1.28.1/kubelogin_linux_amd64.zip" -o kubelogin.zip
+          unzip kubelogin.zip
+          sudo mv kubelogin /usr/local/bin/
+
+      # 3. Configura el acceso a Kubernetes
+      # Usa el secreto KUBE_CONFIG_DATA para crear el archivo de configuración en el corredor
+      - name: Setup Kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG_DATA }}" > ~/.kube/config
+          kubectl config use-context tms-backend-stack-dliriotech-apis-production-oidc
+
+      # 4. Despliega la nueva imagen en Kubernetes
+      # Este comando le dice a Kubernetes que realice un "rolling update"
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl set image deployment/${{ env.DEPLOYMENT_NAME }} api-gateway=${{ env.IMAGE_NAME }}:$(echo ${{ github.sha }} | cut -c1-7) -n ${{ env.KUBE_NAMESPACE }}
+
+      - name: Verificar despliegue
+        run: kubectl rollout status deployment/${{ env.DEPLOYMENT_NAME }} -n ${{ env.KUBE_NAMESPACE }} --timeout=120s
