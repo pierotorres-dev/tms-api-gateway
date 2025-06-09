@@ -1,0 +1,61 @@
+spring:
+  application:
+    name: tms-api-gateway
+
+# Observabilidad - Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: when_authorized
+      livenessState:
+        enabled: true
+      readinessState:
+        enabled: true
+  zipkin:
+    tracing:
+      endpoint: http://localhost:9411/api/v2/spans
+
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+
+# Logging estructurado
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{traceId:-}, %X{spanId:-}] %-5level %logger{36} - %msg%n"
+  level:
+    root: INFO
+    com.dliriotech.tms.apigateway: INFO
+
+springdoc:
+  swagger-ui:
+    url: /openapi.yaml
+    path: /swagger-ui.html
+
+service:
+  api-gateway-key: ${API_GATEWAY_KEY}
+  auth-service-url: ${AUTH_SERVICE_ROUTE}
+  fleet-service-url: ${FLEET_SERVICE_ROUTE}
+
+gateway:
+  publicPaths:
+    - "/api/auth/login"
+    - "/api/auth/validate"
+    - "/api/tokens/generate"
+    - "/api/tokens/refresh"
+    - "/api/users/register"
+
+server:
+  port: 8080
+  shutdown: graceful
