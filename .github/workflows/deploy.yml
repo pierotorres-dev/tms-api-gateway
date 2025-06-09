@@ -81,7 +81,7 @@ jobs:
       # Este comando le dice a Kubernetes que realice un "rolling update"
       - name: Deploy to Kubernetes
         run: |
-          kubectl set image deployment/${{ env.DEPLOYMENT_NAME }} api-gateway=${{ env.IMAGE_NAME }}:$(echo ${{ github.sha }} | cut -c1-7) -n ${{ env.KUBE_NAMESPACE }}
+          kubectl set image deployment/${{ env.DEPLOYMENT_NAME }} ${{ env.DEPLOYMENT_NAME }}=${{ env.IMAGE_NAME }}:$(echo ${{ github.sha }} | cut -c1-7) -n ${{ env.KUBE_NAMESPACE }}
 
       - name: Verificar despliegue
         run: kubectl rollout status deployment/${{ env.DEPLOYMENT_NAME }} -n ${{ env.KUBE_NAMESPACE }} --timeout=120s
