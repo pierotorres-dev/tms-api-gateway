@@ -61,17 +61,13 @@ jobs:
 
       # 2. Instala el plugin 'oidc-login' que tu kubeconfig necesita
       # Esto es CRUCIAL para que la autenticación con token de corta duración funcione
-      - name: Install kubelogin plugin
+      - name: Install oidc-login plugin
         run: |
           sudo apt-get update
           sudo apt-get install -y curl
           curl -sSL "https://github.com/int128/kubelogin/releases/download/v1.28.1/kubelogin_linux_amd64.zip" -o kubelogin.zip
           unzip kubelogin.zip
-          mkdir -p ~/.kube/plugins/oidc-login/bin
-          mv kubelogin ~/.kube/plugins/oidc-login/bin/kubectl-oidc_login
-          chmod +x ~/.kube/plugins/oidc-login/bin/kubectl-oidc_login
-          sudo ln -sf ~/.kube/plugins/oidc-login/bin/kubectl-oidc_login /usr/local/bin/kubectl-oidc_login
-          kubectl plugin list
+          sudo mv kubelogin /usr/local/bin/
 
       # 3. Configura el acceso a Kubernetes
       # Usa el secreto KUBE_CONFIG_DATA para crear el archivo de configuración en el corredor
