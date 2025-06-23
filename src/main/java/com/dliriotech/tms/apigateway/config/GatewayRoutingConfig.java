@@ -19,17 +19,17 @@ public class GatewayRoutingConfig {
     public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
         return builder.routes()
                 .route("auth-service", r -> r.path("/api/auth/**")
-                        .uri(authServiceUrl))
+                        .uri("lb://auth-service"))
                 .route("auth-service", r -> r.path("/api/tokens/**")
-                        .uri(authServiceUrl))
+                        .uri("lb://auth-service"))
                 .route("auth-service", r -> r.path("/api/users/**")
-                        .uri(authServiceUrl))
+                        .uri("lb://auth-service"))
                 .route("fleet-service", r -> r.path("/api/v1/equipos/**")
-                        .uri(fleetServiceUrl))
+                        .uri("lb://fleet-service"))
                 .route("fleet-service", r -> r.path("/api/v1/observaciones-equipo/**")
-                        .uri(fleetServiceUrl))
+                        .uri("lb://fleet-service"))
                 .route("fleet-service", r -> r.path("/api/v1/catalogos/**")
-                        .uri(fleetServiceUrl))
+                        .uri("lb://fleet-service"))
                 .build();
     }
 }
