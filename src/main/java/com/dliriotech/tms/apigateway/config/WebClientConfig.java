@@ -1,6 +1,7 @@
 package com.dliriotech.tms.apigateway.config;
 
 import io.netty.channel.ChannelOption;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,6 +21,9 @@ import java.util.concurrent.TimeUnit;
 @Configuration
 @Slf4j
 public class WebClientConfig {
+
+    @Value("${service.auth-service-url}")
+    private String authServiceUrl;
 
     @Bean
     @LoadBalanced
@@ -43,6 +47,7 @@ public class WebClientConfig {
                         .addHandlerLast(new WriteTimeoutHandler(5, TimeUnit.SECONDS)));
 
         return WebClient.builder()
+                .baseUrl(authServiceUrl)
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
                 .filter(logRequest())
                 .build();
