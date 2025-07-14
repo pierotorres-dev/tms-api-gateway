@@ -44,7 +44,6 @@ springdoc:
     path: /swagger-ui.html
 
 service:
-  api-gateway-key: ${API_GATEWAY_KEY}
   auth-service-url: ${AUTH_SERVICE_ROUTE}
   fleet-service-url: ${FLEET_SERVICE_ROUTE}
 
