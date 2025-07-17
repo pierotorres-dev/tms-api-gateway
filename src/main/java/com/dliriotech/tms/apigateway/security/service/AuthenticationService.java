@@ -1,7 +1,6 @@
 package com.dliriotech.tms.apigateway.security.service;
 
 import com.dliriotech.tms.apigateway.dto.UriRequest;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;

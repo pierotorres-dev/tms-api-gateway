@@ -1,6 +1,16 @@
 spring:
   application:
     name: tms-api-gateway
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD}
+      database: 0
+      timeout: 2000ms
+      client-type: lettuce
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
 
 # Observabilidad - Actuator
 management:
