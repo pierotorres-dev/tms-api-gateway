@@ -6,8 +6,8 @@ spring:
       host: ${REDIS_HOST}
       port: ${REDIS_PORT}
       password: ${REDIS_PASSWORD}
-      database: 0
       timeout: 2000ms
+      connect-timeout: 2000ms
       client-type: lettuce
   lifecycle:
     timeout-per-shutdown-phase: 20s
@@ -64,6 +64,12 @@ gateway:
     - "/api/tokens/generate"
     - "/api/tokens/refresh"
     - "/api/users/register"
+
+app:
+  cache:
+    ttl-seconds: 300
+    prefixes:
+      token-validation: "token:validation:"
 
 server:
   port: 8080
