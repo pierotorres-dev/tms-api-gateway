@@ -88,6 +88,12 @@
 			<artifactId>springdoc-openapi-starter-webflux-ui</artifactId>
 			<version>2.2.0</version>
 		</dependency>
+
+		<!-- 3. Redis -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-redis-reactive</artifactId>
+		</dependency>
 	</dependencies>
 	<dependencyManagement>
 		<dependencies>
