@@ -25,6 +25,9 @@ public class WebClientConfig {
     @Value("${service.auth-service-url}")
     private String authServiceUrl;
 
+    @Value("${service.fleet-service-url}")
+    private String fleetServiceUrl;
+
     @Bean
     @LoadBalanced
     public WebClient.Builder loadBalancedWebClientBuilder() {
@@ -54,6 +57,34 @@ public class WebClientConfig {
 
         return WebClient.builder()
                 .baseUrl(authServiceUrl)
+                .clientConnector(new ReactorClientHttpConnector(httpClient))
+                .filter(logRequest())
+                .build();
+    }
+
+    @Bean
+    public WebClient fleetServiceWebClient() {
+        // More generous connection provider settings
+        ConnectionProvider provider = ConnectionProvider.builder("fleet-pool")
+                .maxConnections(200)
+                .maxIdleTime(Duration.ofSeconds(60))  // Longer idle time
+                .evictInBackground(Duration.ofSeconds(120))
+                .pendingAcquireTimeout(Duration.ofSeconds(60))  // Wait longer for connections
+                .lifo()  // Last-in-first-out for better connection reuse
+                .build();
+
+        // More generous timeout settings
+        HttpClient httpClient = HttpClient.create(provider)
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)  // 10 seconds connect timeout
+                .responseTimeout(Duration.ofSeconds(15))  // 15 seconds response timeout
+                .doOnConnected(conn -> conn
+                        .addHandlerLast(new ReadTimeoutHandler(15, TimeUnit.SECONDS))
+                        .addHandlerLast(new WriteTimeoutHandler(15, TimeUnit.SECONDS)))
+                .keepAlive(true)
+                .wiretap(log.isDebugEnabled());  // Enable detailed connection logging in debug mode
+
+        return WebClient.builder()
+                .baseUrl(fleetServiceUrl)
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
                 .filter(logRequest())
                 .build();
