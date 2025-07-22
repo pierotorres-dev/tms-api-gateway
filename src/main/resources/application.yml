@@ -6,11 +6,31 @@ spring:
       host: ${REDIS_HOST}
       port: ${REDIS_PORT}
       password: ${REDIS_PASSWORD}
-      timeout: 2000ms
-      connect-timeout: 2000ms
+      timeout: 5000ms
+      connect-timeout: 5000ms
       client-type: lettuce
   lifecycle:
     timeout-per-shutdown-phase: 20s
+  cloud:
+    gateway:
+      httpclient:
+        connect-timeout: 5000   # 5 seconds
+        response-timeout: 10s   # 10 seconds
+        pool:
+          max-idle-time: 15s
+          max-connections: 200
+      default-filters:
+        - name: Retry
+          args:
+            retries: 3
+            methods: GET,POST,PUT,DELETE
+            series: SERVER_ERROR
+            exceptions: java.io.IOException,java.util.concurrent.TimeoutException,org.springframework.web.reactive.function.client.WebClientRequestException,reactor.netty.http.client.PrematureCloseException
+            backoff:
+              firstBackoff: 300ms
+              maxBackoff: 2000ms
+              factor: 2
+              basedOnPreviousValue: true
 
 # Observabilidad - Actuator
 management:
