@@ -103,6 +103,30 @@ public class GatewayRoutingConfig {
                                         .setFallbackUri("forward:/fallback/fleet"))
                         )
                         .uri(fleetServiceUrl))
+                .route("fleet-service", r -> r.path("/api/v1/empresas/**")
+                        .filters(f -> f
+                                .retry(config -> config
+                                        .setRetries(3)
+                                        .setBackoff(Duration.ofMillis(300), Duration.ofSeconds(2), 2, true)
+                                        .setExceptions(CONNECTION_EXCEPTIONS)
+                                )
+                                .circuitBreaker(config -> config
+                                        .setName("fleetServiceCircuitBreaker")
+                                        .setFallbackUri("forward:/fallback/fleet"))
+                        )
+                        .uri(fleetServiceUrl))
+                .route("fleet-service", r -> r.path("/api/v1/tipos-equipos/**")
+                        .filters(f -> f
+                                .retry(config -> config
+                                        .setRetries(3)
+                                        .setBackoff(Duration.ofMillis(300), Duration.ofSeconds(2), 2, true)
+                                        .setExceptions(CONNECTION_EXCEPTIONS)
+                                )
+                                .circuitBreaker(config -> config
+                                        .setName("fleetServiceCircuitBreaker")
+                                        .setFallbackUri("forward:/fallback/fleet"))
+                        )
+                        .uri(fleetServiceUrl))
                 .build();
     }
 }
