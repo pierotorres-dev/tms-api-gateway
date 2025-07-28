@@ -38,9 +38,9 @@ public class GatewayRoutingConfig {
                                         .setBackoff(Duration.ofMillis(300), Duration.ofSeconds(2), 2, true)
                                         .setExceptions(CONNECTION_EXCEPTIONS)
                                 )
-                                .circuitBreaker(config -> config
-                                        .setName("authServiceCircuitBreaker")
-                                        .setFallbackUri("forward:/fallback/auth"))
+                                //.circuitBreaker(config -> config
+                                //        .setName("authServiceCircuitBreaker")
+                                //        .setFallbackUri("forward:/fallback/auth"))
                         )
                         .uri(authServiceUrl))
                 .route("auth-service", r -> r.path("/api/tokens/**")
@@ -50,9 +50,9 @@ public class GatewayRoutingConfig {
                                         .setBackoff(Duration.ofMillis(300), Duration.ofSeconds(2), 2, true)
                                         .setExceptions(CONNECTION_EXCEPTIONS)
                                 )
-                                .circuitBreaker(config -> config
-                                        .setName("authServiceCircuitBreaker")
-                                        .setFallbackUri("forward:/fallback/auth"))
+                                //.circuitBreaker(config -> config
+                                //        .setName("authServiceCircuitBreaker")
+                                //        .setFallbackUri("forward:/fallback/auth"))
                         )
                         .uri(authServiceUrl))
                 .route("auth-service", r -> r.path("/api/users/**")
@@ -62,9 +62,9 @@ public class GatewayRoutingConfig {
                                         .setBackoff(Duration.ofMillis(300), Duration.ofSeconds(2), 2, true)
                                         .setExceptions(CONNECTION_EXCEPTIONS)
                                 )
-                                .circuitBreaker(config -> config
-                                        .setName("authServiceCircuitBreaker")
-                                        .setFallbackUri("forward:/fallback/auth"))
+                                //.circuitBreaker(config -> config
+                                //        .setName("authServiceCircuitBreaker")
+                                //        .setFallbackUri("forward:/fallback/auth"))
                         )
                         .uri(authServiceUrl))
                 .route("fleet-service-equipos", r -> r.path("/api/v1/equipos/**")
@@ -74,9 +74,9 @@ public class GatewayRoutingConfig {
                                         .setBackoff(Duration.ofMillis(300), Duration.ofSeconds(2), 2, true)
                                         .setExceptions(CONNECTION_EXCEPTIONS)
                                 )
-                                .circuitBreaker(config -> config
-                                        .setName("fleetServiceCircuitBreaker")
-                                        .setFallbackUri("forward:/fallback/fleet"))
+                                //.circuitBreaker(config -> config
+                                //        .setName("fleetServiceCircuitBreaker")
+                                //        .setFallbackUri("forward:/fallback/fleet"))
                         )
                         .uri(fleetServiceUrl))
                 .route("fleet-service", r -> r.path("/api/v1/observaciones-equipo/**")
@@ -86,9 +86,9 @@ public class GatewayRoutingConfig {
                                         .setBackoff(Duration.ofMillis(300), Duration.ofSeconds(2), 2, true)
                                         .setExceptions(CONNECTION_EXCEPTIONS)
                                 )
-                                .circuitBreaker(config -> config
-                                        .setName("fleetServiceCircuitBreaker")
-                                        .setFallbackUri("forward:/fallback/fleet"))
+                                //.circuitBreaker(config -> config
+                                //        .setName("fleetServiceCircuitBreaker")
+                                //        .setFallbackUri("forward:/fallback/fleet"))
                         )
                         .uri(fleetServiceUrl))
                 .route("fleet-service", r -> r.path("/api/v1/catalogos/**")
@@ -98,9 +98,9 @@ public class GatewayRoutingConfig {
                                         .setBackoff(Duration.ofMillis(300), Duration.ofSeconds(2), 2, true)
                                         .setExceptions(CONNECTION_EXCEPTIONS)
                                 )
-                                .circuitBreaker(config -> config
-                                        .setName("fleetServiceCircuitBreaker")
-                                        .setFallbackUri("forward:/fallback/fleet"))
+                                //.circuitBreaker(config -> config
+                                //        .setName("fleetServiceCircuitBreaker")
+                                //        .setFallbackUri("forward:/fallback/fleet"))
                         )
                         .uri(fleetServiceUrl))
                 .route("fleet-service", r -> r.path("/api/v1/empresas/**")
@@ -110,9 +110,9 @@ public class GatewayRoutingConfig {
                                         .setBackoff(Duration.ofMillis(300), Duration.ofSeconds(2), 2, true)
                                         .setExceptions(CONNECTION_EXCEPTIONS)
                                 )
-                                .circuitBreaker(config -> config
-                                        .setName("fleetServiceCircuitBreaker")
-                                        .setFallbackUri("forward:/fallback/fleet"))
+                                //.circuitBreaker(config -> config
+                                //        .setName("fleetServiceCircuitBreaker")
+                                //        .setFallbackUri("forward:/fallback/fleet"))
                         )
                         .uri(fleetServiceUrl))
                 .route("fleet-service", r -> r.path("/api/v1/tipos-equipos/**")
@@ -122,9 +122,9 @@ public class GatewayRoutingConfig {
                                         .setBackoff(Duration.ofMillis(300), Duration.ofSeconds(2), 2, true)
                                         .setExceptions(CONNECTION_EXCEPTIONS)
                                 )
-                                .circuitBreaker(config -> config
-                                        .setName("fleetServiceCircuitBreaker")
-                                        .setFallbackUri("forward:/fallback/fleet"))
+                                //.circuitBreaker(config -> config
+                                //        .setName("fleetServiceCircuitBreaker")
+                                //        .setFallbackUri("forward:/fallback/fleet"))
                         )
                         .uri(fleetServiceUrl))
                 .build();
