@@ -28,6 +28,9 @@ public class WebClientConfig {
     @Value("${service.fleet-service-url}")
     private String fleetServiceUrl;
 
+    @Value("${service.tyre-service-url}")
+    private String tyreServiceUrl;
+
     @Bean
     @LoadBalanced
     public WebClient.Builder loadBalancedWebClientBuilder() {
@@ -46,20 +49,7 @@ public class WebClientConfig {
                 .build();
 
         // More generous timeout settings
-        HttpClient httpClient = HttpClient.create(provider)
-                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)  // 10 seconds connect timeout
-                .responseTimeout(Duration.ofSeconds(15))  // 15 seconds response timeout
-                .doOnConnected(conn -> conn
-                        .addHandlerLast(new ReadTimeoutHandler(15, TimeUnit.SECONDS))
-                        .addHandlerLast(new WriteTimeoutHandler(15, TimeUnit.SECONDS)))
-                .keepAlive(true)
-                .wiretap(log.isDebugEnabled());  // Enable detailed connection logging in debug mode
-
-        return WebClient.builder()
-                .baseUrl(authServiceUrl)
-                .clientConnector(new ReactorClientHttpConnector(httpClient))
-                .filter(logRequest())
-                .build();
+        return getWebClient(provider, authServiceUrl);
     }
 
     @Bean
@@ -74,6 +64,25 @@ public class WebClientConfig {
                 .build();
 
         // More generous timeout settings
+        return getWebClient(provider, fleetServiceUrl);
+    }
+
+    @Bean
+    public WebClient tyreServiceWebClient() {
+        // More generous connection provider settings
+        ConnectionProvider provider = ConnectionProvider.builder("tyre-pool")
+                .maxConnections(200)
+                .maxIdleTime(Duration.ofSeconds(60))  // Longer idle time
+                .evictInBackground(Duration.ofSeconds(120))
+                .pendingAcquireTimeout(Duration.ofSeconds(60))  // Wait longer for connections
+                .lifo()  // Last-in-first-out for better connection reuse
+                .build();
+
+        // More generous timeout settings
+        return getWebClient(provider, tyreServiceUrl);
+    }
+
+    private WebClient getWebClient(ConnectionProvider provider, String serviceUrl) {
         HttpClient httpClient = HttpClient.create(provider)
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)  // 10 seconds connect timeout
                 .responseTimeout(Duration.ofSeconds(15))  // 15 seconds response timeout
@@ -84,7 +93,7 @@ public class WebClientConfig {
                 .wiretap(log.isDebugEnabled());  // Enable detailed connection logging in debug mode
 
         return WebClient.builder()
-                .baseUrl(fleetServiceUrl)
+                .baseUrl(serviceUrl)
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
                 .filter(logRequest())
                 .build();

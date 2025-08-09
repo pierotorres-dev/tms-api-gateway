@@ -76,6 +76,7 @@ springdoc:
 service:
   auth-service-url: ${AUTH_SERVICE_ROUTE}
   fleet-service-url: ${FLEET_SERVICE_ROUTE}
+  tyre-service-url: ${TYRE_SERVICE_ROUTE}
 
 gateway:
   publicPaths:
