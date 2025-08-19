@@ -21,6 +21,9 @@ public class GatewayRoutingConfig {
     @Value("${service.fleet-service-url}")
     private String fleetServiceUrl;
 
+    @Value("${service.tyre-service-url}")
+    private String tyreServiceUrl;
+
     private static final Class<? extends Throwable>[] CONNECTION_EXCEPTIONS = new Class[]{
             PrematureCloseException.class,
             ConnectException.class,
@@ -127,6 +130,24 @@ public class GatewayRoutingConfig {
                                 //        .setFallbackUri("forward:/fallback/fleet"))
                         )
                         .uri(fleetServiceUrl))
+                .route("tyre-service", r -> r.path("/api/v1/neumaticos/**")
+                        .filters(f -> f
+                                        .retry(config -> config
+                                                .setRetries(3)
+                                                .setBackoff(Duration.ofMillis(300), Duration.ofSeconds(2), 2, true)
+                                                .setExceptions(CONNECTION_EXCEPTIONS)
+                                        )
+                        )
+                        .uri(tyreServiceUrl))
+                .route("tyre-service", r -> r.path("/api/v1/observaciones-neumaticos/**")
+                        .filters(f -> f
+                                .retry(config -> config
+                                        .setRetries(3)
+                                        .setBackoff(Duration.ofMillis(300), Duration.ofSeconds(2), 2, true)
+                                        .setExceptions(CONNECTION_EXCEPTIONS)
+                                )
+                        )
+                        .uri(tyreServiceUrl))
                 .build();
     }
 }
