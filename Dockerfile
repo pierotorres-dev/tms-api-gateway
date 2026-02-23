@@ -1,6 +1,6 @@
 # Stage 1: Build the application with Maven
 # Usamos un alias 'BUILD' para esta etapa
-FROM maven:3.9.6-eclipse-temurin-17-alpine AS BUILD
+FROM maven:3.9.6-eclipse-temurin-21-alpine AS BUILD
 
 # Establecemos el directorio de trabajo dentro del contenedor
 WORKDIR /app
@@ -19,7 +19,7 @@ RUN mvn clean package -DskipTests
 
 # Stage 2: Create the final, lightweight image
 # Usamos una imagen base de Java 17 delgada, sin las herramientas de compilación.
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
