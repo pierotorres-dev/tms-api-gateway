@@ -134,12 +134,22 @@ public class GatewayRoutingConfig {
                         .filters(f -> f
                                         .retry(config -> config
                                                 .setRetries(3)
-                                                .setBackoff(Duration.ofMillis(300), Duration.ofSeconds(2), 2, true)
+                                                .setBackoff
+                                                        (Duration.ofMillis(300), Duration.ofSeconds(2), 2, true)
                                                 .setExceptions(CONNECTION_EXCEPTIONS)
                                         )
                         )
                         .uri(tyreServiceUrl))
                 .route("tyre-service", r -> r.path("/api/v1/observaciones-neumaticos/**")
+                        .filters(f -> f
+                                .retry(config -> config
+                                        .setRetries(3)
+                                        .setBackoff(Duration.ofMillis(300), Duration.ofSeconds(2), 2, true)
+                                        .setExceptions(CONNECTION_EXCEPTIONS)
+                                )
+                        )
+                        .uri(tyreServiceUrl))
+                .route("tyre-service", r -> r.path("/api/v1/movimientos-neumaticos/**")
                         .filters(f -> f
                                 .retry(config -> config
                                         .setRetries(3)

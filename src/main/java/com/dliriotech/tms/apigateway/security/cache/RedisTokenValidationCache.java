@@ -1,5 +1,6 @@
 package com.dliriotech.tms.apigateway.security.cache;
 
+import com.dliriotech.tms.apigateway.dto.TokenValidationResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,10 +20,10 @@ public class RedisTokenValidationCache implements TokenValidationCache {
     @Value("${app.cache.prefixes.token-validation}")
     private String cachePrefix;
 
-    private final ReactiveRedisTemplate<String, Boolean> redisTemplate;
+    private final ReactiveRedisTemplate<String, TokenValidationResponse> redisTemplate;
 
     @Override
-    public Mono<Boolean> getValidationResult(String token) {
+    public Mono<TokenValidationResponse> getValidationResult(String token) {
         String key = createKey(token);
         return redisTemplate.opsForValue().get(key)
                 .doOnSuccess(result -> {
@@ -37,10 +38,10 @@ public class RedisTokenValidationCache implements TokenValidationCache {
     }
 
     @Override
-    public Mono<Void> cacheValidationResult(String token, boolean isValid) {
+    public Mono<Void> cacheValidationResult(String token, TokenValidationResponse response) {
         String key = createKey(token);
         Duration cacheTtl = Duration.ofSeconds(cacheTtlSeconds);
-        return redisTemplate.opsForValue().set(key, isValid, cacheTtl)
+        return redisTemplate.opsForValue().set(key, response, cacheTtl)
                 .doOnSuccess(result -> log.debug("Token validation result cached: {}", key))
                 .onErrorResume(e -> {
                     log.error("Error caching token validation: {}", e.getMessage());

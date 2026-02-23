@@ -1,6 +1,6 @@
 package com.dliriotech.tms.apigateway.security.service;
 
-import com.dliriotech.tms.apigateway.dto.UriRequest;
+import com.dliriotech.tms.apigateway.dto.TokenValidationResponse;
 import com.dliriotech.tms.apigateway.security.cache.TokenValidationCache;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -26,32 +26,29 @@ public class AuthenticationService {
         this.tokenCache = tokenCache;
     }
 
-    public Mono<Boolean> validateToken(String token, UriRequest request) {
-        // First check if the token validation result is in cache
+    public Mono<TokenValidationResponse> validateToken(String token) {
         return tokenCache.getValidationResult(token)
                 .switchIfEmpty(Mono.defer(() -> {
-                    // If not in cache, validate with auth-service
                     log.debug("Token not found in cache, validating with auth-service");
-                    return validateWithAuthService(token, request)
-                            .flatMap(isValid ->
-                                    // Cache the result for future requests
-                                    tokenCache.cacheValidationResult(token, isValid)
-                                            .thenReturn(isValid)
+                    return validateWithAuthService(token)
+                            .flatMap(response ->
+                                    tokenCache.cacheValidationResult(token, response)
+                                            .thenReturn(response)
                             );
                 }));
     }
-    private Mono<Boolean> validateWithAuthService(String token, UriRequest request) {
+
+    private Mono<TokenValidationResponse> validateWithAuthService(String token) {
         long startTime = System.currentTimeMillis();
         return webClient.get()
                 .uri("/api/auth/validate")
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                 .retrieve()
-                .bodyToMono(Boolean.class)
+                .bodyToMono(TokenValidationResponse.class)
                 .doOnSuccess(result -> {
                     long duration = System.currentTimeMillis() - startTime;
                     log.debug("Token validation with auth-service took {}ms", duration);
                 })
-                // Implement exponential backoff retry for connection issues
                 .retryWhen(Retry.backoff(3, Duration.ofMillis(300))
                         .maxBackoff(Duration.ofSeconds(2))
                         .filter(throwable -> {
@@ -66,10 +63,10 @@ public class AuthenticationService {
                         .doAfterRetry(rs -> log.info("Retried connection attempt {} after failure",
                                 rs.totalRetries() + 1))
                 )
-                .timeout(Duration.ofSeconds(10))  // Overall timeout for the operation
+                .timeout(Duration.ofSeconds(10))
                 .onErrorResume(error -> {
                     log.error("Error validating token after retries: {}", error.getMessage());
-                    return Mono.just(false);
+                    return Mono.empty();
                 });
     }
 }
