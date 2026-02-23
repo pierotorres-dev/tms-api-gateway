@@ -28,6 +28,12 @@ public class ErrorHandler {
     public Mono<Void> handleError(ServerWebExchange exchange, HttpStatus status,
                                   String message, Map<String, String> details) {
         ServerHttpResponse response = exchange.getResponse();
+
+        if (response.isCommitted()) {
+            log.warn("Respuesta ya committed, no se puede enviar error: {} - {}", status.value(), message);
+            return Mono.empty();
+        }
+
         response.setStatusCode(status);
         response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
 
