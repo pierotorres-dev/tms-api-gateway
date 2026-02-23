@@ -40,10 +40,10 @@ import java.util.concurrent.TimeoutException;
 public class GlobalErrorWebExceptionHandler extends AbstractErrorWebExceptionHandler {
 
     public GlobalErrorWebExceptionHandler(ErrorAttributes errorAttributes,
-                                          WebProperties.Resources resources,
+                                          WebProperties webProperties,
                                           ApplicationContext applicationContext,
                                           ServerCodecConfigurer configurer) {
-        super(errorAttributes, resources, applicationContext);
+        super(errorAttributes, webProperties.getResources(), applicationContext);
         this.setMessageWriters(configurer.getWriters());
         this.setMessageReaders(configurer.getReaders());
     }
