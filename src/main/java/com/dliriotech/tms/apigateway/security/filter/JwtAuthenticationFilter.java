@@ -3,6 +3,7 @@ package com.dliriotech.tms.apigateway.security.filter;
 import com.dliriotech.tms.apigateway.config.PublicRoutesConfig;
 import com.dliriotech.tms.apigateway.dto.TokenValidationResponse;
 import com.dliriotech.tms.apigateway.error.ErrorHandler;
+import com.dliriotech.tms.apigateway.security.exception.AuthServiceUnavailableException;
 import com.dliriotech.tms.apigateway.security.service.AuthenticationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -83,16 +84,22 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
                         return chain.filter(mutatedExchange);
                     })
                     .switchIfEmpty(Mono.defer(() -> {
-                        log.warn("Validación de token fallida para: {} {}", method, path);
+                        log.warn("Token inválido o expirado para: {} {}", method, path);
                         return errorHandler.handleAuthError(exchange,
-                                HttpStatus.FORBIDDEN,
-                                "El token no tiene autorización para acceder al recurso solicitado");
+                                HttpStatus.UNAUTHORIZED,
+                                "Token inválido o expirado");
                     }))
                     .onErrorResume(error -> {
-                        log.error("Error validando token: {}", error.getMessage(), error);
+                        if (error instanceof AuthServiceUnavailableException) {
+                            log.error("Auth-service no disponible: {}", error.getMessage());
+                            return errorHandler.handleAuthError(exchange,
+                                    HttpStatus.SERVICE_UNAVAILABLE,
+                                    "Servicio de autenticación no disponible. Intente nuevamente en unos momentos");
+                        }
+                        log.error("Error inesperado validando token: {}", error.getMessage(), error);
                         return errorHandler.handleAuthError(exchange,
                                 HttpStatus.INTERNAL_SERVER_ERROR,
-                                "Error en el servicio de autenticación: " + error.getMessage());
+                                "Error interno del servidor");
                     });
         } catch (Exception ex) {
             log.error("Error inesperado en el filtro de autenticación", ex);
