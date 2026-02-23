@@ -4,6 +4,7 @@ import com.dliriotech.tms.apigateway.config.PublicRoutesConfig;
 import com.dliriotech.tms.apigateway.dto.TokenValidationResponse;
 import com.dliriotech.tms.apigateway.error.ErrorHandler;
 import com.dliriotech.tms.apigateway.security.exception.AuthServiceUnavailableException;
+import com.dliriotech.tms.apigateway.security.exception.TokenValidationException;
 import com.dliriotech.tms.apigateway.security.service.AuthenticationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -61,7 +62,15 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
             String token = authHeader.substring(7);
             log.info("Validando acceso para: {} {}", method, path);
 
+            // First: validate the token (Mono<TokenValidationResponse> or empty)
+            // Then: decide what to do based on the result
+            // This separation prevents switchIfEmpty from firing after chain.filter()
+            // completes (chain.filter() returns Mono<Void> which is always "empty")
             return authenticationService.validateToken(token)
+                    .switchIfEmpty(Mono.defer(() -> {
+                        log.warn("Token inválido o expirado para: {} {}", method, path);
+                        return Mono.error(new TokenValidationException("Token inválido o expirado"));
+                    }))
                     .flatMap(validationResponse -> {
                         // Authorization check: verify the role allows this HTTP method
                         if (validationResponse.getAllowedMethods() == null
@@ -83,13 +92,12 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
                         ServerWebExchange mutatedExchange = addUserContextHeaders(sanitizedExchange, validationResponse);
                         return chain.filter(mutatedExchange);
                     })
-                    .switchIfEmpty(Mono.defer(() -> {
-                        log.warn("Token inválido o expirado para: {} {}", method, path);
-                        return errorHandler.handleAuthError(exchange,
-                                HttpStatus.UNAUTHORIZED,
-                                "Token inválido o expirado");
-                    }))
                     .onErrorResume(error -> {
+                        if (error instanceof TokenValidationException) {
+                            return errorHandler.handleAuthError(exchange,
+                                    HttpStatus.UNAUTHORIZED,
+                                    error.getMessage());
+                        }
                         if (error instanceof AuthServiceUnavailableException) {
                             log.error("Auth-service no disponible: {}", error.getMessage());
                             return errorHandler.handleAuthError(exchange,

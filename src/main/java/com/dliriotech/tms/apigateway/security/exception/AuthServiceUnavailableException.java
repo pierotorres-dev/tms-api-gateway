@@ -25,4 +25,3 @@ public class AuthServiceUnavailableException extends RuntimeException {
         this.status = HttpStatus.SERVICE_UNAVAILABLE;
     }
 }
-
