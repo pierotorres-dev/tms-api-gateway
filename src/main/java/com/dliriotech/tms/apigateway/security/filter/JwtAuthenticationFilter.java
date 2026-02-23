@@ -123,11 +123,21 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
      * instead of relying on path parameters for security-sensitive data.
      */
     private ServerWebExchange addUserContextHeaders(ServerWebExchange exchange, TokenValidationResponse validation) {
-        ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
-                .header(HEADER_USER_ID, String.valueOf(validation.getUserId()))
-                .header(HEADER_EMPRESA_ID, String.valueOf(validation.getEmpresaId()))
-                .header(HEADER_USER_ROLE, validation.getRole())
-                .build();
+        ServerHttpRequest.Builder requestBuilder = exchange.getRequest().mutate();
+
+        if (validation.getUserId() != null) {
+            requestBuilder.header(HEADER_USER_ID, validation.getUserId().toString());
+        }
+
+        if (validation.getEmpresaId() != null) {
+            requestBuilder.header(HEADER_EMPRESA_ID, validation.getEmpresaId().toString());
+        }
+
+        if (validation.getRole() != null) {
+            requestBuilder.header(HEADER_USER_ROLE, validation.getRole());
+        }
+
+        ServerHttpRequest mutatedRequest = requestBuilder.build();
         return exchange.mutate().request(mutatedRequest).build();
     }
 
