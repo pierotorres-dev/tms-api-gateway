@@ -1,5 +1,7 @@
 package com.dliriotech.tms.apigateway.config;
 
+import com.dliriotech.tms.apigateway.dto.TokenValidationResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
@@ -12,17 +14,17 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 public class RedisConfig {
 
     @Bean
-    public ReactiveRedisTemplate<String, Boolean> reactiveRedisTemplate(
-            ReactiveRedisConnectionFactory factory) {
+    public ReactiveRedisTemplate<String, TokenValidationResponse> reactiveRedisTemplate(
+            ReactiveRedisConnectionFactory factory, ObjectMapper objectMapper) {
 
         StringRedisSerializer keySerializer = new StringRedisSerializer();
-        Jackson2JsonRedisSerializer<Boolean> valueSerializer =
-                new Jackson2JsonRedisSerializer<>(Boolean.class);
+        Jackson2JsonRedisSerializer<TokenValidationResponse> valueSerializer =
+                new Jackson2JsonRedisSerializer<>(objectMapper, TokenValidationResponse.class);
 
-        RedisSerializationContext.RedisSerializationContextBuilder<String, Boolean> builder =
+        RedisSerializationContext.RedisSerializationContextBuilder<String, TokenValidationResponse> builder =
                 RedisSerializationContext.newSerializationContext(keySerializer);
 
-        RedisSerializationContext<String, Boolean> context =
+        RedisSerializationContext<String, TokenValidationResponse> context =
                 builder.value(valueSerializer).build();
 
         return new ReactiveRedisTemplate<>(factory, context);
