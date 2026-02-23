@@ -31,7 +31,7 @@ public class ErrorHandler {
 
         if (response.isCommitted()) {
             log.warn("Respuesta ya committed, no se puede enviar error: {} - {}", status.value(), message);
-            return Mono.empty();
+            return response.setComplete();
         }
 
         response.setStatusCode(status);
